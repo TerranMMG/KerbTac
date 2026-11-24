@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\KerbTac.Core\KerbTac.Core.csproj" />
+    <Compile Include="..\..\src\KerbTac.Recorder\ReplayPlayer.cs" Link="Linked\ReplayPlayer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- BDA adapter code depends on KSP's Vessel; compile the KSP-free parts
+         here with a tiny Vessel stub so their real behaviour is covered. -->
+    <Compile Include="..\..\src\KerbTac.Recorder\Bda\IBdaAdapter.cs" Link="Linked\Bda\IBdaAdapter.cs" />
+    <Compile Include="..\..\src\KerbTac.Recorder\Bda\NullBdaAdapter.cs" Link="Linked\Bda\NullBdaAdapter.cs" />
+    <Compile Include="..\..\src\KerbTac.Recorder\Bda\BdaReflectionAdapter.cs" Link="Linked\Bda\BdaReflectionAdapter.cs" />
+  </ItemGroup>
+
+</Project>

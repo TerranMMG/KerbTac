@@ -1,0 +1,8 @@
+<Project>
+  <!-- The install ZIP does not ship symbols. Omit CodeView records rather than
+       embedding a build path that depends on symlink/drive canonicalization. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+</Project>

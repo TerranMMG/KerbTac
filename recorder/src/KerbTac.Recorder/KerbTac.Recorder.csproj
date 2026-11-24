@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <AssemblyName>KerbTac</AssemblyName>
+    <RootNamespace>KerbTac.Recorder</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <DebugType Condition="'$(Configuration)' != 'Release'">portable</DebugType>
+    <!-- Set KSP_ROOT to the KSP install to build against the real game DLLs.
+         When it is empty we compile against the stub reference assembly, which
+         is only useful for type-checking on machines without KSP. -->
+    <DefineConstants Condition="'$(KSP_ROOT)' == ''">$(DefineConstants);KERBTAC_STUB_REFS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../KerbTac.Core/KerbTac.Core.csproj" />
+    <ProjectReference Include="../../refs-stub/KerbTac.RefsStub.csproj"
+                      Condition="'$(KSP_ROOT)' == ''" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(KSP_ROOT)' != ''">
+    <!-- KSP 1.12 installs use KSP_x64_Data; the skeleton refs use KSP_Data. -->
+    <KspManagedDir Condition="Exists('$(KSP_ROOT)/KSP_x64_Data/Managed')">KSP_x64_Data/Managed</KspManagedDir>
+    <KspManagedDir Condition="'$(KspManagedDir)' == ''">KSP_Data/Managed</KspManagedDir>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(KSP_ROOT)' != ''">
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(KSP_ROOT)/$(KspManagedDir)/UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,50 @@
+# ---- .NET / C# ----
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+.idea/
+recorder/refs/
+recorder/refs-ksp/
+
+# ---- Node ----
+node_modules/
+player/dist/
+player/.vite/
+player/.vitest/
+*.tsbuildinfo
+
+# ---- Local recordings (large, never committed) ----
+recordings/
+*.kerbtac
+# ...except small synthetic fixtures used by the player tests
+!player/testdata/*.kerbtac
+
+# ---- Python ----
+__pycache__/
+*.pyc
+
+# ---- Scratch / tooling ----
+.DS_Store
+tmp/
+.superpowers/
+scratch/
+
+# Local verification scratch (recordings, ILSpy tooling)
+/.tmp-ksp/
+/.tmp-tools/
+
+# Local Kerbin basemap working directory (source + previews; never commit)
+/basemap/
+
+# Large Kerbin source maps and scratch crops (the shipped asset is the downscaled WebP)
+/KerbinMap*.jpg
+/Sat64k_resized.jpg
+/.tmp-map/
+
+# Real KSP assemblies copied from a local install for compile checks (never commit)
+recorder/refs-real/
+
+# Large local OBJ source library (the shipped white models live in player/src/assets/bda)
+/Vessel Model/

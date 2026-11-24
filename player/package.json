@@ -1,0 +1,27 @@
+{
+  "name": "kerbtac-player",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KerbTac replay player: offline .kerbtac viewer (Three.js)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node add-build-notices.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fflate": "^0.8.3",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/three": "^0.187.0",
+    "@vitest/browser-playwright": "5.1.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vite-plugin-singlefile": "^2.3.4",
+    "vitest": "5.1.0"
+  }
+}
