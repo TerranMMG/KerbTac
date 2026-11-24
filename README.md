@@ -7,6 +7,8 @@ A mission recorder and offline browser replay player for Kerbal Space Program 1.
   <strong>简体中文</strong> &nbsp;·&nbsp; <a href="#english">English</a>
 </p>
 
+## 中文
+
 把一次 KSP 飞行变成可拖动的时间轴：录制端在游戏内连续记录多艘载具、导弹与炸弹、战斗事件和遥测；播放器在 Chrome 里用 Three.js 以行星为参考系重建整场任务，支持三种视角、轨迹、高度墙、事件和遥测。录制与回放全部离线，不需要服务器，也不上传录像。
 
 ## 两部分
