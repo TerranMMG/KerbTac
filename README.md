@@ -4,7 +4,10 @@ KSP 1.12.5 的任务记录仪与离线浏览器回放器。
 A mission recorder and offline browser replay player for Kerbal Space Program 1.12.5.
 
 <p align="center">
-  <strong>简体中文</strong> &nbsp;·&nbsp; <a href="#english">English</a>
+  <strong>简体中文</strong> &nbsp;·&nbsp; <a href="#english">English</a><br>
+  <a href="docs/format-v1.md">回放格式</a> &nbsp;·&nbsp;
+  <a href="docs/README.md">格式索引</a> &nbsp;·&nbsp;
+  <a href="docs/DATA-NOTES.md">数据说明</a>
 </p>
 
 ## 中文
@@ -39,7 +42,7 @@ A mission recorder and offline browser replay player for Kerbal Space Program 1.
 
 ### 格式
 
-`.kerbtac` 是带版本号的 ZIP + JSON 格式，当前支持 v1 / revision 1–4。新播放器可以读取旧录像；格式契约见 [`docs/format-v1.md`](docs/format-v1.md) 及后续增量文档。
+`.kerbtac` 是带版本号的 ZIP + JSON 格式，当前支持 v1 / revision 1–4。新播放器可以读取旧录像；格式契约见 [`docs/format-v1.md`](docs/format-v1.md) 及后续增量文档，数据来源、缺测语义和限制见 [`docs/DATA-NOTES.md`](docs/DATA-NOTES.md)。
 
 ## 快速开始
 
@@ -87,7 +90,10 @@ KerbTac 的原创代码采用 **MIT**，见 [LICENSE](LICENSE)。第三方资产
 ## English
 
 <p align="center">
-  <a href="#中文">简体中文</a> &nbsp;·&nbsp; <strong>English</strong>
+  <a href="#中文">简体中文</a> &nbsp;·&nbsp; <strong>English</strong><br>
+  <a href="docs/format-v1.md">Format</a> &nbsp;·&nbsp;
+  <a href="docs/README.md">Format index</a> &nbsp;·&nbsp;
+  <a href="docs/DATA-NOTES.md">Data notes</a>
 </p>
 
 Turn a KSP flight into a scrubbable timeline: the recorder continuously captures multiple vessels, missiles and bombs, combat events, and telemetry inside the game; the player rebuilds the mission in a planet-fixed Three.js scene in Chrome, with three cameras, trails, altitude walls, events, and telemetry. Recording and replay are fully offline: no server and no uploads.
@@ -120,7 +126,7 @@ They can be used separately: replaying a recording does not require KSP, and the
 
 #### Format
 
-`.kerbtac` is a versioned ZIP + JSON format, currently v1 / revisions 1–4. The current player reads older recordings; the format contract starts at [`docs/format-v1.md`](docs/format-v1.md).
+`.kerbtac` is a versioned ZIP + JSON format, currently v1 / revisions 1–4. The current player reads older recordings; the format contract starts at [`docs/format-v1.md`](docs/format-v1.md), and data provenance, missing-value semantics, and limitations are documented in [`docs/DATA-NOTES.md`](docs/DATA-NOTES.md).
 
 ### Quick start
 
