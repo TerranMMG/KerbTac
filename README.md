@@ -49,7 +49,7 @@ A mission recorder and offline browser replay player for Kerbal Space Program 1.
 ### 安装
 
 1. 退出 KSP 1.12.5。
-2. 从 [Releases](https://github.com/TerranMMG/KerbTac/releases) 下载 `KerbTac-v0.1.0.zip`，解压到 **KSP 游戏根目录**（包含 `KSP_x64.exe` 的目录），不要解压进 `GameData` 里面。
+2. 从 [Releases](https://github.com/TerranMMG/KerbTac/releases) 或 [SpaceDock](https://spacedock.info/mod/4889/KerbTac) 下载 `KerbTac-v0.1.0.zip`，解压到 **KSP 游戏根目录**（包含 `KSP_x64.exe` 的目录），不要解压进 `GameData` 里面。
 3. 确认存在 `GameData/KerbTac/Plugins/KerbTac.dll`。
 4. 启动游戏。原版游戏即可录制；安装 BDArmory Plus 后可以额外记录战斗数据。
 
@@ -133,7 +133,7 @@ They can be used separately: replaying a recording does not require KSP, and the
 #### Installation
 
 1. Exit KSP 1.12.5.
-2. Download `KerbTac-v0.1.0.zip` from [Releases](https://github.com/TerranMMG/KerbTac/releases) and extract it into the **KSP game root** (the folder containing `KSP_x64.exe`), not into `GameData`.
+2. Download `KerbTac-v0.1.0.zip` from [Releases](https://github.com/TerranMMG/KerbTac/releases) or [SpaceDock](https://spacedock.info/mod/4889/KerbTac) and extract it into the **KSP game root** (the folder containing `KSP_x64.exe`), not into `GameData`.
 3. Confirm that `GameData/KerbTac/Plugins/KerbTac.dll` exists.
 4. Start the game. The stock game records as-is; BDArmory Plus adds combat data.
 
