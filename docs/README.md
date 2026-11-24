@@ -1,5 +1,11 @@
 # KerbTac 文档索引
 
+<p align="center">
+  <strong>简体中文</strong> &nbsp;·&nbsp; <a href="#english">English</a>
+</p>
+
+## 中文
+
 KerbTac 的 `.kerbtac` 录像格式按 revision 增量公开。格式契约描述容器、字段和校验规则；
 数据说明描述数据来源、采样方式、战斗归因、缺测语义和已知限制。
 
@@ -36,3 +42,47 @@ KerbTac 的 `.kerbtac` 录像格式按 revision 增量公开。格式契约描�
 | 版本 | `formatVersion = 1`，当前 `formatRevision = 4`，读取方兼容 1–4 |
 | 采样 | 主动载具默认 10 Hz；未加载载具 10 秒位置关键帧；导弹 actor 约 20 Hz |
 | 回放 | 单文件 HTML，桌面 Chrome/Chromium + WebGL；运行时无网络请求 |
+
+---
+
+## English
+
+<p align="center">
+  <a href="#中文">简体中文</a> &nbsp;·&nbsp; <strong>English</strong>
+</p>
+
+KerbTac publishes the `.kerbtac` recording format as incremental revisions. The format contract covers the container, fields, and validation rules; the data notes cover data provenance, sampling, combat attribution, missing-value semantics, and known limitations.
+
+### Where to start
+
+1. New to the format: [`format-v1.md`](format-v1.md#english) (ZIP container, coordinates, manifest, vessels, events).
+2. Read the revisions in order: [`format-v1.1.md`](format-v1.1.md) → [`format-v1.2.md`](format-v1.2.md) → [`format-v1.3.md`](format-v1.3.md).
+3. Check whether a recording's data is trustworthy and how missing values are handled: [`DATA-NOTES.md`](DATA-NOTES.md#english).
+
+### Format contract
+
+| Document | Content |
+| --- | --- |
+| [`format-v1.md`](format-v1.md#english) | Base v1: ZIP container, coordinates/attitude, manifest, bodies, vessels, events, validation |
+| [`format-v1.1.md`](format-v1.1.md) | v1.1: `formatRevision 2`, logical flight segments/storage chunks, mission/gaps/chapters, actors/effects/locks/summary, new sample columns |
+| [`format-v1.2.md`](format-v1.2.md) | v1.2: `formatRevision 3`, BDA combat events, `data` keys, subject conventions, body-fixed effect initial velocity |
+| [`format-v1.3.md`](format-v1.3.md) | v1.3: `formatRevision 4`, recording modes, staging lineage, `modelRole`, threat range, orbit segments, missing-value semantics for optional columns |
+
+### Data notes
+
+| Document | Content |
+| --- | --- |
+| [`DATA-NOTES.md`](DATA-NOTES.md#english) | Data provenance and file purposes, sampling/chunking, identity and classification, combat attribution, missing values and confidence, model assets, validation/troubleshooting, privacy and limitations |
+
+### Quick facts
+
+| Item | Value |
+| --- | --- |
+| Container | Standard ZIP; `.kerbtac` (`.zip` also accepted); entries stored or deflated |
+| Internal text | UTF-8 JSON, no BOM; `NaN` / `Infinity` are forbidden |
+| Time | KSP UT, seconds |
+| Position | Body-fixed `lat` / `lon` / `alt` (meters above sea level) |
+| Attitude | Quaternion `[x, y, z, w]`; trails may use a flat `4N` array |
+| Version | `formatVersion = 1`, current `formatRevision = 4`, readers support 1–4 |
+| Sampling | Active vessel 10 Hz by default; unloaded vessels 10-second position keyframes; missile actors about 20 Hz |
+| Replay | Single-file HTML, desktop Chrome/Chromium + WebGL; no runtime network requests |

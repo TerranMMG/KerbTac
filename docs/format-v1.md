@@ -1,5 +1,11 @@
 # KerbTac 文件格式 v1（`.kerbtac`）
 
+<p align="center">
+  <strong>简体中文</strong> &nbsp;·&nbsp; <a href="#english">English</a>
+</p>
+
+## 中文
+
 > 状态：**冻结草案**（M1 实现基准）
 > 版本：`formatVersion = 1`
 > 更新：2026-11-03
@@ -722,6 +728,813 @@ This file is a ZIP archive. See docs/format-v1.md for the schema.
 ## 13. 最小示例
 
 一个只有两个样本、一个事件的最小合法文件（实际 ZIP 内含 4 个文件）：
+
+`manifest.json`
+
+```json
+{
+  "format": "kerbtac",
+  "formatVersion": 1,
+  "generator": { "name": "KerbTac Recorder", "version": "0.1.0" },
+  "game": { "kspVersion": "1.12.5.3190", "saveName": "MNCS", "scene": "FLIGHT" },
+  "session": {
+    "id": "20261103T120000Z-abc123",
+    "startUt": 100.0,
+    "endUt": 100.1
+  },
+  "bodies": "bodies.json",
+  "events": "events.json",
+  "vessels": [
+    {
+      "id": "0f8fad5b-d9cb-469f-a165-70867728950e",
+      "name": "Test",
+      "type": "Plane",
+      "body": "Kerbin",
+      "color": "#4fc3f7",
+      "track": "vessels/0f8fad5b-d9cb-469f-a165-70867728950e.json"
+    }
+  ]
+}
+```
+
+`vessels/0f8fad5b-d9cb-469f-a165-70867728950e.json`
+
+```json
+{
+  "id": "0f8fad5b-d9cb-469f-a165-70867728950e",
+  "name": "Test",
+  "type": "Plane",
+  "body": "Kerbin",
+  "segments": [
+    {
+      "index": 0,
+      "kind": "flight",
+      "body": "Kerbin",
+      "startUt": 100.0,
+      "endUt": 100.1,
+      "samples": {
+        "t": [100.0, 100.1],
+        "lat": [0.0, 0.0],
+        "lon": [0.0, 0.0001],
+        "alt": [70.0, 70.5],
+        "q": [0,0,0,1, 0,0,0,1]
+      }
+    }
+  ]
+}
+```
+
+---
+
+## English
+
+<p align="center">
+  <a href="#中文">简体中文</a> &nbsp;·&nbsp; <strong>English</strong>
+</p>
+
+### KerbTac File Format v1 (`.kerbtac`)
+
+> Status: **frozen draft** (baseline for the M1 implementation)
+> Version: `formatVersion = 1`
+> Updated: 2026-11-03
+>
+> This document is the **contract** between the recorder (a KSP C# plugin) and the
+> player (Three.js in the browser). Any implementation on either side must follow
+> this document; section 8 of the early plan draft is a historical draft, and this
+> document wins wherever the two conflict. Implementation and document must be
+> changed together.
+
+---
+
+### 1. Overview
+
+`.kerbtac` is a **ZIP archive** containing a number of UTF-8 JSON files. It describes
+the trajectories, attitude, telemetry, and events of several vessels in one KSP
+session, plus the celestial-body parameters needed for replay.
+
+Design goals:
+
+1. **Open**: ZIP + JSON, readable and writable in any language; no dependency on KSP, Unity, or a private binary format.
+2. **Self-contained**: the file carries every celestial-body parameter needed for replay, so the player needs no KSP data.
+3. **Columnar parsing**: trajectory samples are stored by column (columnar), which makes it easy to build typed arrays in one pass.
+4. **Future-proof**: multiple bodies, orbit segments, and multiple vessels are all expressible within the v1 structure; implementations may land in stages.
+
+### 2. Container
+
+#### 2.1 ZIP requirements
+
+| Item | Requirement |
+|---|---|
+| Format | Standard ZIP (PKZIP 2.0 or later, ZIP64 supported) |
+| Extension | `.kerbtac` (recommended); the player also accepts `.zip` |
+| Detection | Read the file header `50 4B 03 04`; **do not rely on the extension** |
+| Compression method | Entries may use `stored (0)` or `deflate (8)`; readers must support both |
+| Filename encoding | UTF-8 (ZIP general purpose flag bit 11 = 1); ASCII also compatible |
+| Internal text encoding | UTF-8, **no BOM** |
+| Encryption | Not supported; an encrypted entry must raise an error |
+| Entry order | No requirement |
+
+> Implementation note: the recorder prefers Deflate; if the runtime lacks
+> `System.IO.Compression.DeflateStream`, it degrades to `stored`. Both are valid
+> v1 files. A 10-minute single-vessel trajectory is usually < 2 MB uncompressed,
+> so `stored` does not break the size budget.
+
+#### 2.2 Directory structure
+
+```text
+manifest.json            required
+bodies.json              required
+events.json              required
+vessels/<vesselId>.json  one per manifest.vessels[] entry, required
+README.txt               optional
+preview.png              optional (ignored by the v1 player)
+models.json              optional (M5 player model extension)
+models/<sha256>.<obj|stl>  optional (model mesh)
+```
+
+- The path separator is always `/`.
+- An entry path must not be absolute and must not contain `..`, drive letters, or backslashes; readers must reject such entries.
+- Readers must ignore unknown entries (forward compatibility).
+
+#### 2.3 Size limits (recommended values for readers)
+
+| Item | Recommended limit | Behavior |
+|---|---|---|
+| Single entry, decompressed | 64 MB | Reject with an error |
+| All entries, decompressed | 512 MB | Reject with an error (zip bomb protection) |
+| Entry count | 10 000 | Reject |
+
+#### 2.4 `models.json` (optional)
+
+The player may attach custom vessel models to a new archive; this changes neither
+`manifest.json` nor `formatRevision`. The model extension has its own version
+number, currently `1`. Example:
+
+```json
+{
+  "version": 1,
+  "models": [{
+    "vesselId": "0f8fad5b-d9cb-469f-a165-70867728950e",
+    "file": "models/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef.obj",
+    "scale": 1,
+    "rotation": [0, 90, 0],
+    "offset": [0, 0, 0]
+  }]
+}
+```
+
+- `vesselId` is the vessel ID inside the recording, at most one entry per vessel; debris and transient objects still use the built-in models.
+- `file` must match `models/<sha256>.<obj|stl>`; the hash is the lowercase 64-character hexadecimal SHA-256 string of the model's raw bytes. When saving, models with the same format and the same bytes share one entry. For OBJ/STL only the mesh is read; MTL files, textures, and external files are not loaded. The player uses the vessel's current display color.
+- Models are centered on the bounding box of the raw mesh, with the longest axis scaled uniformly to fit 120 scene units; by default the source axes are left untransformed, and the renderer treats +Y as up and −Z as forward. Then a positive `scale`, a `rotation` (three XYZ Euler angles in degrees, Three.js `XYZ` convention), and an `offset` (in the renderer's model-local axes, in scene meters) are applied in that order. The default transform is `1`, `[0,0,0]`, `[0,0,0]`; every component must be a finite number.
+- A single model file may be at most 50 MiB; the unique models referenced by one archive may total at most 300 MiB (both counted as decompressed bytes); the container limits in §2.3 still apply.
+- When the extension is absent there is no warning and the built-in models are used as usual. An unsupported version or corrupted metadata produces a warning and is ignored; when a single entry is invalid, the model is missing, or the model cannot be parsed, only the affected vessel falls back. For duplicate bindings, the first binding that passes the metadata and entry checks is kept.
+
+### 3. Common conventions
+
+#### 3.1 JSON
+
+- Numbers: decimal, exponent notation allowed; `NaN`, `Infinity`, and `-Infinity` are **forbidden**
+  (they are not valid JSON and they break interpolation on the player side).
+- Integer columns are semantically integers (`stage`, `partCount`), but are still serialized as JSON numbers.
+- Unknown fields: writers may add them; readers must ignore them and must not fail because of them.
+- Missing optional fields: treat them as "unknown" and never crash.
+- An empty array and `null` are not equivalent: an absent optional column is expressed by **omitting the key**, not by `null`.
+
+#### 3.2 Time
+
+- All time points are **KSP UT (Universal Time)**, in seconds, as absolute `double` values.
+- Wall-clock times use ISO 8601 UTC strings such as `2026-11-03T12:00:00Z`, and are used only for display and file naming.
+- The playback timeline uses **only** UT; frame rate and wall-clock time do not drive advancement.
+
+#### 3.3 Units and angles
+
+| Quantity | Unit | Notes |
+|---|---|---|
+| Time | s | UT |
+| Distance, altitude, radius, SOI | m | double precision |
+| Velocity | m/s | body-fixed frame components |
+| Mass | kg | |
+| Angle | **degrees** | latitude, longitude, heading, orbital elements, rotation rate |
+| Quaternion | dimensionless | `[x, y, z, w]`, unit quaternion |
+| Throttle | 0–1 | |
+| Load factor | g | KSP `geeForce`, 1.0 = 1 g |
+| Resource amount | game units | LiquidFuel / Oxidizer / ElectricCharge / MonoPropellant |
+
+The player converts angles to radians internally; the writer always writes degrees.
+
+#### 3.4 Quaternions
+
+- The order is fixed as **x, y, z, w** (the same as Three.js `Quaternion.set` and the same
+  as the field order of the KSP `Quaternion`).
+- In trajectory columns it may be written as a flat array: `q: [x0,y0,z0,w0, x1,y1,z1,w1, ...]`, with length `4 × N`.
+- Sparse attitude (orbit segments) uses `attitude: { "t": [...], "q": [...] }`, where `q` is likewise flat.
+- Writers must normalize; readers perform tolerant normalization on non-normalized values (when the length is close to 0, use the identity quaternion).
+
+#### 3.5 Identifiers
+
+| Identifier | Form | Notes |
+|---|---|---|
+| `vesselId` | Guid string of KSP `vessel.id` (lowercase, hyphenated) | unique within the session |
+| `bodyName` | KSP body name (`Kerbin`, `Mun`, `Duna`…) | matches KSP, case-sensitive |
+| `eventType` | stable lowercase snake_case string | see §8.3 |
+| `situation` | name of the KSP `Vessel.Situations` enum member | uppercase, see §7.5 |
+
+### 4. Coordinate systems and attitude (normative)
+
+This is the part of v1 that is easiest to get wrong; the recorder and the player must
+agree exactly.
+
+#### 4.1 Body-fixed frame (BF, Body-Fixed)
+
+Every celestial body has its own right-handed BF frame:
+
+- the origin is the body center;
+- **+Y points at the north pole**;
+- **longitude 0° lies along +X**, **east longitude 90° lies along +Z**;
+- right-handed: `X × Y = Z`.
+
+Conversion from latitude/longitude/altitude to BF (`R` = `body.radius`, `alt` = altitude
+above sea level):
+
+```text
+r  = R + alt
+x  = r * cos(lat) * cos(lon)
+y  = r * sin(lat)
+z  = r * cos(lat) * sin(lon)
+```
+
+Inverse:
+
+```text
+lat = asin(y / r)
+lon = atan2(z, x)
+alt = r - R
+```
+
+- Latitude is positive north and negative south, range `[-90, 90]`; longitude is positive east and negative west, range `[-180, 180)`.
+- `alt` is KSP `vessel.altitude` (above sea level), **not** radar altitude and **not**
+  height above terrain. The player must not use it as terrain height.
+- This formula matches the numerical convention of KSP's own `FlightGlobals.GetLatitude`/`GetLongitude`,
+  so the recorder can use the `vessel.latitude/longitude/altitude` provided by KSP directly.
+
+##### 4.1.1 Mirror transform on the player side (normative)
+
+The BF axes above satisfy `X × Y = Z`, but the **geographic orientation** is mirrored:
+as longitude increases from +X toward +Z, the motion is counter-clockwise when viewed
+from outside the sphere (on a standard globe, east should run clockwise). So treating BF
+coordinates directly as Three.js world coordinates mirrors both the map and the
+trajectories east–west.
+
+The player must apply one reflection `S = diag(1, 1, -1)` in the **render layer**; the
+recording file itself is unchanged:
+
+```text
+p_render = (x, y, -z)
+q_render = (-qx, -qy, qz, qw)     // S R S, keeps the rotation a proper rotation
+```
+
+- Planet meshes keep the standard `SphereGeometry` UVs; textures use an **unflipped** standard equirectangular map
+  (left edge = 180°W).
+- Velocities, event positions, and camera targets also pass through `S`; never write the mirror back into `.kerbtac`.
+- Reference implementation: `player/src/scene/renderFrame.ts`.
+
+#### 4.2 Attitude quaternion `q`
+
+`q` rotates the **vessel model frame** into the **BF frame of the current main body**:
+
+```text
+v_bf = q * v_model
+```
+
+Model frame convention (the player must model meshes accordingly):
+
+- **+Z = nose forward**
+- **+Y = vessel up**
+- **+X = right wing direction**
+- right-handed: `X × Y = Z`
+
+That is, `q * (0,0,1)` is the vessel's nose direction in BF, and `q * (0,1,0)` is the
+vessel's up direction. The player only needs to model meshes to this convention and
+then apply `q` directly; **no** Unity left-handed correction is needed.
+
+> **Recorder implementation requirement (critical)**: do not write `vessel.srfRelRotation`
+> directly. KSP/Unity numerical coordinates are left-handed, and feeding them straight
+> into Three.js produces a mirror image. The correct approach is to build the basis from
+> vectors on the recorder side:
+>
+> ```csharp
+> Quaternion invBody = Quaternion.Inverse(vessel.mainBody.bodyTransform.rotation);
+> Vector3 fwd = (invBody * vessel.transform.forward).normalized;   // model +Z
+> Vector3 up  = (invBody * vessel.transform.up).normalized;        // model +Y
+> Vector3 right = Vector3.Cross(up, fwd).normalized;               // model +X
+> Vector3 up2 = Vector3.Cross(fwd, right).normalized;              // re-orthogonalize
+> Quaternion q = Quaternion.LookRotation(fwd, up2);                // Unity: +Z forward, +Y up
+> ```
+>
+> The four components obtained this way are, in BF numerical coordinates, exactly the
+> "model → BF" rotation, and the player can use them directly. The semantics of
+> `LookRotation` (+Z forward, +Y up) match the model convention in this document.
+
+- If a vessel model's actual appearance does not match `q` (for example, some part assemblies have the nose pointing backwards),
+  add a fixed correction quaternion on the **player** side; do not change the data.
+- Player-side world attitude: `worldQuat = bodyWorldQuat(t) * q`.
+
+#### 4.3 Body rotation
+
+`bodies.json` provides, for each body:
+
+```json
+"rotation": {
+  "epochUt": 123456.789,
+  "q0": [0, 0, 0, 1],
+  "axis": [0, 1, 0],
+  "rateDegPerSec": 0.0167083333
+}
+```
+
+- `q0`: at `epochUt`, the rotation quaternion from the body's BF frame to the **parent frame**
+  (the root body is fixed at the origin, its parent is the session world frame, and `q0 = identity`).
+- `axis`: the unit spin-axis vector **in the BF frame** (M1 fixes it to `[0,1,0]`, i.e. the body's north pole).
+  The spin happens in the body's own frame, so the incremental rotation must be multiplied on the
+  right of `q0`; this way bodies with axial tilt (RSS and the like, in the future) do not get
+  their tilt rotated away as well.
+- `rateDegPerSec`: spin rate (degrees/second); use a negative value for retrograde.
+- At any time:
+
+```text
+angle = rateDegPerSec * (t - epochUt)          // degrees
+bodyWorldQuat(t) = q0 * quatFromAxisAngle(axis, angle)
+```
+
+- BF → world: `worldPos = bodyWorldPos(t) + bodyWorldQuat(t) * bfPos`.
+- The root body has `parent = null`, and its `bodyWorldPos = (0,0,0)`.
+- M1 requires only the root body (Kerbin). With multiple bodies, recurse through `parent`.
+
+#### 4.4 Velocity
+
+`samples.vx/vy/vz` are the components of the vessel velocity **in the BF frame of the
+current main body** (m/s), i.e.
+`Quaternion.Inverse(body.bodyTransform.rotation) * vessel.srf_velocity`.
+
+- The speed magnitude `sqrt(vx²+vy²+vz²)` shown by the player is **ground speed** (relative to the planet surface).
+- Vertical speed is computed from position differences; if the file carries the optional `vs` column, prefer `vs`.
+- Orbit segments do not require velocity columns.
+
+#### 4.5 Heading
+
+Optional column `hdg`: the true heading of the vessel's nose direction, in degrees,
+0 = north, 90 = east, clockwise. If it is missing, the player can derive it from
+`q * (0,0,1)`.
+
+### 5. `manifest.json`
+
+Top-level object describing the session and the vessel list.
+
+```json
+{
+  "format": "kerbtac",
+  "formatVersion": 1,
+  "generator": { "name": "KerbTac Recorder", "version": "0.1.0" },
+  "game": {
+    "kspVersion": "1.12.5.3190",
+    "unityVersion": "2019.4.18f1",
+    "saveName": "MNCS",
+    "scene": "FLIGHT"
+  },
+  "session": {
+    "id": "20261103T120000Z-abc123",
+    "name": "Fighter Test",
+    "startUt": 123456.789,
+    "endUt": 123789.012,
+    "startWall": "2026-11-03T12:00:00Z",
+    "endWall": "2026-11-03T12:05:32Z",
+    "duration": 332.223
+  },
+  "bodies": "bodies.json",
+  "events": "events.json",
+  "vessels": [
+    {
+      "id": "0f8fad5b-d9cb-469f-a165-70867728950e",
+      "name": "F-16 Test",
+      "type": "Plane",
+      "body": "Kerbin",
+      "color": "#4fc3f7",
+      "team": null,
+      "rootPart": "mk2Cockpit_Standard",
+      "partCount": 42,
+      "crewCount": 1,
+      "track": "vessels/0f8fad5b-d9cb-469f-a165-70867728950e.json"
+    }
+  ]
+}
+```
+
+#### 5.1 Fields
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `format` | string | ✅ | fixed `"kerbtac"` |
+| `formatVersion` | int | ✅ | v1 = `1` |
+| `generator.name` | string | ✅ | recorder name |
+| `generator.version` | string | ✅ | recorder version, semantic |
+| `game.kspVersion` | string | ✅ | KSP version, e.g. `1.12.5.3190` |
+| `game.unityVersion` | string | ❌ | Unity version, diagnostics only |
+| `game.saveName` | string | ❌ | save name; `null` or omitted when unknown |
+| `game.scene` | string | ❌ | usually `"FLIGHT"` |
+| `session.id` | string | ✅ | unique session ID, recommended `YYYYMMDDTHHMMSSZ-<6 hex>` |
+| `session.name` | string | ❌ | human-readable name; defaults to the file name |
+| `session.startUt` | number | ✅ | time of the first sample (UT seconds) |
+| `session.endUt` | number | ✅ | time of the last sample; may equal `startUt` while in progress |
+| `session.startWall` | string | ❌ | ISO 8601 UTC |
+| `session.endWall` | string | ❌ | ISO 8601 UTC |
+| `session.duration` | number | ❌ | `endUt - startUt`, seconds |
+| `bodies` | string | ✅ | fixed `"bodies.json"` |
+| `events` | string | ✅ | fixed `"events.json"` |
+| `vessels` | array | ✅ | may be an empty array (empty recording) |
+| `vessels[].id` | string | ✅ | KSP vessel Guid, lowercase |
+| `vessels[].name` | string | ✅ | vessel name (may contain spaces or Chinese characters) |
+| `vessels[].type` | string | ✅ | KSP `VesselType` name, see §7.6 |
+| `vessels[].body` | string | ✅ | main body name |
+| `vessels[].color` | string | ❌ | `#rrggbb`; if omitted, the player assigns colors in order |
+| `vessels[].team` | string/null | ❌ | BDA team (M2); `null` in M1 |
+| `vessels[].rootPart` | string | ❌ | internal name of the root part |
+| `vessels[].partCount` | int | ❌ | part count |
+| `vessels[].crewCount` | int | ❌ | crew count |
+| `vessels[].track` | string | ✅ | trajectory file path; must be inside the archive |
+
+#### 5.2 Constraints
+
+- `vessels[].id` is unique within the array; `track` is unique.
+- `session.startUt <= session.endUt`; the `t` of every trajectory sample must fall within
+  `[startUt - 1, endUt + 1]` (a 1 s floating-point margin is allowed).
+- `vessels[].body` must exist in `bodies.json`.
+
+### 6. `bodies.json`
+
+Top-level object whose keys are body names. It must contain every body referenced by any
+vessel segment, plus their ancestor chains (needed to compute world positions).
+
+```json
+{
+  "Kerbin": {
+    "name": "Kerbin",
+    "parent": null,
+    "radius": 600000.0,
+    "gravParameter": 3531600000000.0,
+    "atmosphereDepth": 70000.0,
+    "sphereOfInfluence": 84159286.0,
+    "rotation": {
+      "epochUt": 123456.789,
+      "q0": [0.0, 0.0, 0.0, 1.0],
+      "axis": [0.0, 1.0, 0.0],
+      "rateDegPerSec": 0.0167083333
+    },
+    "orbit": null,
+    "style": "kerbin"
+  }
+}
+```
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | string | ✅ | same as the key; duplicated for easier iteration |
+| `parent` | string/null | ✅ | parent body name; `null` for the root body |
+| `radius` | number | ✅ | equatorial radius, meters, > 0 |
+| `gravParameter` | number | ✅ | `mu`, m³/s², > 0 |
+| `atmosphereDepth` | number | ❌ | atmosphere height, meters; `0` or omitted for airless bodies |
+| `sphereOfInfluence` | number | ❌ | SOI radius, meters |
+| `rotation.epochUt` | number | ✅ | reference epoch for the rotation parameters |
+| `rotation.q0` | [x,y,z,w] | ✅ | attitude relative to the parent |
+| `rotation.axis` | [x,y,z] | ✅ | spin axis in the BF frame (usually `[0,1,0]`) |
+| `rotation.rateDegPerSec` | number | ✅ | degrees/second, negative for retrograde |
+| `orbit` | object/null | ❌ | two-body orbital elements relative to the parent; `null` for the root body |
+| `style` | string | ❌ | player style key, e.g. `kerbin`, `mun`, `duna` |
+
+#### 6.1 `orbit` (relative to the parent)
+
+```json
+{
+  "epoch": 123456.789,
+  "semiMajorAxis": 13599840256.0,
+  "eccentricity": 0.0,
+  "inclinationDeg": 0.0,
+  "lanDeg": 0.0,
+  "argPeDeg": 0.0,
+  "meanAnomalyDeg": 0.0
+}
+```
+
+- All angles are in degrees; `epoch` is UT.
+- M1 does not require multi-body orbit propagation; when a reader encounters `parent != null`
+  and has not implemented it, it may degrade to "draw that body at its parent's origin" and
+  show a hint in the UI.
+- The root body (`parent = null`) must have `orbit` as `null` or omitted.
+
+#### 6.2 `style`
+
+Suggested values (the player uses a default material for unknown values):
+
+`kerbin`, `mun`, `minmus`, `duna`, `ike`, `eve`, `gilly`, `moho`, `jool`,
+`laythe`, `vall`, `tylo`, `bop`, `pol`, `eeloo`, `kerbol`, `default`.
+
+### 7. `vessels/<vesselId>.json`
+
+Metadata and trajectory segments for a single vessel.
+
+```json
+{
+  "id": "0f8fad5b-d9cb-469f-a165-70867728950e",
+  "name": "F-16 Test",
+  "type": "Plane",
+  "body": "Kerbin",
+  "segments": [
+    {
+      "index": 0,
+      "kind": "flight",
+      "body": "Kerbin",
+      "startUt": 123456.789,
+      "endUt": 123789.012,
+      "source": "active",
+      "samples": {
+        "t":   [123456.789, 123456.889],
+        "lat": [-0.0972, -0.0971],
+        "lon": [-74.5577, -74.5576],
+        "alt": [67.0, 68.2],
+        "q":   [0,0,0,1, 0,0.001,0,0.999999],
+        "vx":  [0.0, 1.2],
+        "vy":  [0.0, 0.1],
+        "vz":  [0.0, 0.0],
+        "throttle": [0.0, 0.35],
+        "mass": [12000.0, 11998.0],
+        "g": [1.0, 1.0],
+        "stage": [3, 3],
+        "situation": ["LANDED", "FLYING"],
+        "hdg": [90.0, 91.2],
+        "vs": [0.0, 0.4],
+        "lf": [800.0, 799.9],
+        "ox": [0.0, 0.0],
+        "ec": [500.0, 499.9]
+      }
+    }
+  ]
+}
+```
+
+#### 7.1 Vessel object fields
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | string | ✅ | must match the file name and the manifest |
+| `name` | string | ✅ | |
+| `type` | string | ✅ | `VesselType` |
+| `body` | string | ✅ | main body at the end of the session |
+| `segments` | array | ✅ | at least 1 segment; vessels with an empty trajectory should not appear in the manifest |
+
+#### 7.2 Segment fields
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `index` | int | ✅ | increases from 0, unique within the vessel |
+| `kind` | string | ✅ | `flight` / `surface` / `orbit` / `static` |
+| `body` | string | ✅ | main body of the segment; must exist in `bodies.json` |
+| `startUt` | number | ✅ | time of the first sample in the segment |
+| `endUt` | number | ✅ | time of the last sample in the segment; `startUt <= endUt` |
+| `samples` | object | ⚠️ | required when `kind != orbit` |
+| `orbit` | object | ⚠️ | required when `kind == orbit` |
+| `attitude` | object | ❌ | only for `kind == orbit`: `{t:[], q:[]}` sparse attitude |
+| `boundary` | bool | ❌ | `true` means there is a position jump between this segment and the previous one |
+| `source` | string | ❌ | `active` / `loaded` / `unloaded` / `checkpoint` |
+
+Segment order: array order is time order; `segments[i].endUt <= segments[i+1].startUt`
+(equality is allowed; small overlaps are also allowed, and the player gives priority to
+the later segment).
+
+#### 7.3 `kind` semantics
+
+| kind | Purpose | Sampling | Position source |
+|---|---|---|---|
+| `flight` | in-atmosphere flight / physics-loaded | 5–20 Hz | `lat/lon/alt` |
+| `surface` | stationary or slow on the ground/water | 0.2–5 Hz | `lat/lon/alt` |
+| `orbit` | on-rails / not loaded | keyframes | `orbit` elements |
+| `static` | a position recorded once (e.g. initial parking) | 1 sample | `lat/lon/alt` |
+
+M1 produces only `flight` (possibly with one `static` starting segment). The player must
+handle all four.
+
+#### 7.4 `samples` columns
+
+Every column array must have the same length as `t`; `q` has length `4 × N`.
+
+| Column | Required | Type | Notes |
+|---|---|---|---|
+| `t` | ✅ | number[] | UT seconds; **strictly increasing** within the segment |
+| `lat` | ✅ | number[] | degrees |
+| `lon` | ✅ | number[] | degrees |
+| `alt` | ✅ | number[] | meters, above sea level |
+| `q` | ✅ | number[] | flat quaternions, 4×N |
+| `vx` | ❌ | number[] | BF velocity components, m/s |
+| `vy` | ❌ | number[] | |
+| `vz` | ❌ | number[] | |
+| `throttle` | ❌ | number[] | 0–1 |
+| `mass` | ❌ | number[] | kg |
+| `g` | ❌ | number[] | G-force, g |
+| `stage` | ❌ | int[] | current stage |
+| `situation` | ❌ | string[] | see §7.5 |
+| `hdg` | ❌ | number[] | true heading, degrees |
+| `vs` | ❌ | number[] | vertical speed, m/s |
+| `lf` | ❌ | number[] | LiquidFuel |
+| `ox` | ❌ | number[] | Oxidizer |
+| `ec` | ❌ | number[] | ElectricCharge |
+| `mp` | ❌ | number[] | MonoPropellant |
+| `srfSpeed` | ❌ | number[] | ground speed, m/s (redundant, for validation) |
+
+Constraints:
+
+- `t` is strictly increasing within a segment (`t[i] < t[i+1]`). Samples with identical timestamps must be dropped or merged.
+- `lat ∈ [-90, 90]`, `lon ∈ [-180, 180]` (`180` is allowed).
+- `alt >= -2000` (below sea level is allowed, e.g. deep ocean).
+- Each quaternion in `q` should have a length in `[0.99, 1.01]`; readers normalize.
+- When an optional column is missing, the player shows "unknown" (do not pass off 0 as a real value). The current
+  writer supports [per-row missing values](format-v1.3.md#8-可选列的缺测语义); required columns may still
+  contain only finite numbers.
+
+#### 7.5 `situation` values
+
+`ToString()` of KSP `Vessel.Situations`:
+
+`PRELAUNCH`, `LANDED`, `SPLASHED`, `FLYING`, `SUB_ORBITAL`, `ORBITING`,
+`ESCAPING`, `DOCKED`.
+
+Unknown values are treated as `FLYING` and the original string is preserved.
+
+#### 7.6 `type` values
+
+`ToString()` of KSP `VesselType`:
+
+`Debris`, `Probe`, `Rover`, `Lander`, `Ship`, `Plane`, `Station`, `Relay`,
+`Base`, `EVA`, `Flag`, `SpaceObject`, `Unknown`.
+
+The player uses the `Unknown` icon for unknown types.
+
+#### 7.7 `orbit` (orbit segment)
+
+```json
+{
+  "epoch": 123800.0,
+  "semiMajorAxis": 700000.0,
+  "eccentricity": 0.001,
+  "inclinationDeg": 28.5,
+  "lanDeg": 120.0,
+  "argPeDeg": 0.0,
+  "meanAnomalyDeg": 10.0
+}
+```
+
+- The mean anomaly at `epoch` is `meanAnomalyDeg`.
+- `semiMajorAxis` is in meters; it stays negative for hyperbolic orbits (per the two-body convention).
+- Positions are computed in the **inertial frame** and then converted to BF; a v1 player may first degrade
+  orbit segments to `static` as "orbit segments not supported yet" (M1 produces no orbit segments).
+
+### 8. `events.json`
+
+The top level is an array of events in ascending `ut` order (readers should tolerate
+out-of-order events and sort them).
+
+```json
+[
+  {
+    "ut": 123457.0,
+    "type": "takeoff",
+    "vessel": "0f8fad5b-d9cb-469f-a165-70867728950e",
+    "target": null,
+    "body": "Kerbin",
+    "lat": -0.0972,
+    "lon": -74.5577,
+    "alt": 70.0,
+    "data": {}
+  }
+]
+```
+
+#### 8.1 Event fields
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `ut` | number | ✅ | event time |
+| `type` | string | ✅ | stable event type, see §8.3 |
+| `vessel` | string/null | ✅ | associated vessel id; `null` for global events |
+| `target` | string/null | ❌ | the second associated vessel (hit/docking) |
+| `body` | string/null | ❌ | body where the event occurred |
+| `lat` | number | ❌ | latitude of the event position |
+| `lon` | number | ❌ | longitude of the event position |
+| `alt` | number | ❌ | altitude of the event position, meters |
+| `data` | object | ❌ | type-specific extra fields; defaults to `{}` |
+
+#### 8.2 Event positions
+
+- If `body` + `lat` + `lon` + `alt` are given, the player draws a marker on the map.
+- The position may be missing (e.g. a global `flight_end`); events without a position appear only in the event list and the timeline.
+- Event positions should come from the vessel state at the moment of the event; a deviation of ≤ 0.5 s from the nearest sample is allowed.
+
+#### 8.3 Event types (v1)
+
+**Required in M1:**
+
+| type | Trigger | `data` fields |
+|---|---|---|
+| `flight_start` | recording starts | `{"reason":"auto"\|"manual"}` |
+| `flight_end` | recording stops | `{"reason":"manual"\|"scene_exit"\|"application_quit"\|"vessel_destroyed"\|"auto_landing"\|"revert"\|"quickload","duration":332.2}` |
+| `takeoff` | situation → `FLYING` (from the ground) | `{"speed":85.3}` |
+| `touchdown` | `FLYING` → `LANDED`/`SPLASHED` | `{"verticalSpeed":-2.1,"speed":65.0}` |
+| `landing` | stable after landing (optional) | `{"speed":0.2}` |
+| `gear_up` / `gear_down` | the Gear action group toggles, or the gear's `deployed` changes | `{"part":"Gear"}` (action group) or the module name |
+| `stage` | staging | `{"stage":2}` |
+| `engine_ignition` | engine ignition | `{"part":"...","throttle":1.0}` |
+| `engine_shutdown` | engine shutdown | `{"part":"..."}` |
+| `crash` | crash | `{"speed":120.0}` |
+| `destroyed` | vessel destroyed | `{"reason":"..."}` |
+| `soi_change` | SOI change | `{"from":"Kerbin","to":"Mun"}` |
+| `scene_exit` | leaving Flight | `{"scene":"SPACECENTER"}` |
+| `note` | manual bookmark (optional) | `{"text":"..."}` |
+
+**Reserved (M2+; writers may emit them optionally, readers must tolerate them):**
+
+`decouple`, `undock`, `dock`, `vessel_split`, `vessel_merge`,
+`weapon_release`, `hit`, `proximity_detonation`, `gunfire`, `countermeasure`,
+`target_lock`, `parachute_deploy`, `parachute_cut`, `fairing_jettison`,
+`cargo_bay`, `light`, `rcs`, `time_jump`, `revert`, `quickload`, `recovery`.
+
+#### 8.4 Events and the timeline
+
+- An event's `ut` must fall within `[manifest.session.startUt, endUt]` (a 1 s margin is allowed);
+  readers may drop or clamp events outside the range.
+- Multiple events with the same `ut` keep their write order (stable sort).
+
+### 9. `README.txt` (optional)
+
+Plain text, UTF-8, for human readers:
+
+```text
+KerbTac recording
+Format: kerbtac v1
+Generator: KerbTac Recorder 0.1.0
+KSP: 1.12.5.3190
+Created: 2026-11-03T12:00:00Z
+This file is a ZIP archive. See docs/format-v1.md for the schema.
+```
+
+### 10. Validation rules (readers must enforce)
+
+Run in order; on any failure, reject and give a **specific reason**:
+
+1. The file header is `PK\x03\x04` (or `PK\x05\x06` for an empty ZIP).
+2. The ZIP can be extracted, is not encrypted, and entry paths are safe (no `..`, absolute paths, or backslashes).
+3. The decompressed total size and the entry count are within the limits.
+4. `manifest.json` exists, is valid JSON, and is an object.
+5. `manifest.format === "kerbtac"`.
+6. `manifest.formatVersion` is an integer and `1 <= v <= 1` (the currently supported upper bound).
+   - `v > 1`: report "this file uses format vX; this player supports up to v1".
+7. The entries pointed to by `manifest.bodies` / `manifest.events` exist.
+8. `bodies.json` is valid; the root body exists; every referenced body and its ancestors exist.
+9. `events.json` is an array; every event has `ut` and `type`.
+10. Every `manifest.vessels[].track` exists and is valid; the `id` matches the file name.
+11. For every segment, all `samples` column lengths agree, `q` has length `4N`, `t` is strictly increasing,
+    and all numbers are finite.
+12. At least one vessel has at least one segment with ≥ 1 sample; otherwise report "no replayable vessels".
+
+**Tolerance (must not reject; warn only):**
+
+- Unknown top-level fields, unknown event types, unknown vessel types, unknown segment `kind`.
+- Missing optional columns.
+- Slight out-of-order `t` (sort locally and continue, but record a warning).
+- A single sample's `lat/lon` out of range (clamp to the legal range and record a warning).
+
+### 11. Versioning and compatibility
+
+- `formatVersion` is the **major version**: increment by 1 on incompatible changes; readers explicitly reject higher versions.
+- Minor evolution is achieved by **adding optional fields only**; older readers ignore unknown fields.
+- Event types, vessel types, and segment `kind` are open strings; unknown values get default behavior.
+- KSP `ConfigNode`s, part snapshots, and Unity raw world coordinates are not written into v1.
+
+#### 11.1 Differences from the early plan draft (implementation rulings)
+
+| Item | Early plan draft, section 8 | This document | Reason |
+|---|---|---|---|
+| Attitude source | `vessel.srfRelRotation` | quaternion built from `forward`/`up` in BF | avoids the mirroring error from Unity's left-handed frame to Three.js's right-handed frame; the vector construction can be unit-tested without KSP |
+| New optional columns | none | `hdg`, `vs`, `srfSpeed` | needed by the telemetry panel and useful for validation; all optional, so compatibility is preserved |
+| ZIP compression | Deflate | Deflate preferred, Stored as a legal fallback | the availability of `System.IO.Compression` on KSP Mono must be measured; Stored guarantees the file can always be written |
+| Segment `situation` | listed in samples | same | — |
+
+### 12. Changelog
+
+| Date | Version | Change |
+|---|---|---|
+| 2026-11-03 | 1 (draft) | Compiled from §8 of the early plan draft; completed the attitude coordinate-system definition, validation rules, event table, and optional columns |
+| 2026-11-03 | 1 (draft) | Clarified that the spin axis is in BF and that rotation composition is `q0 * spin`; Kerbin's `q0` is a pure Y rotation, so the values are unchanged |
+
+### 13. Minimal example
+
+A minimal valid file with only two samples and one event (the actual ZIP contains 4 files):
 
 `manifest.json`
 

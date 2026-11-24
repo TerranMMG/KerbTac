@@ -48,10 +48,9 @@ A mission recorder and offline browser replay player for Kerbal Space Program 1.
 
 ### 安装
 
-1. 退出 KSP 1.12.5。
-2. 从 [Releases](https://github.com/TerranMMG/KerbTac/releases) 或 [SpaceDock](https://spacedock.info/mod/4889/KerbTac) 下载 `KerbTac-v0.1.0.zip`，解压到 **KSP 游戏根目录**（包含 `KSP_x64.exe` 的目录），不要解压进 `GameData` 里面。
-3. 确认存在 `GameData/KerbTac/Plugins/KerbTac.dll`。
-4. 启动游戏。原版游戏即可录制；安装 BDArmory Plus 后可以额外记录战斗数据。
+1. 从 [Releases](https://github.com/TerranMMG/KerbTac/releases) 或 [SpaceDock](https://spacedock.info/mod/4889/KerbTac) 下载 `KerbTac-v0.1.0.zip`，解压到 **KSP 游戏根目录**（包含 `KSP_x64.exe` 的目录），不要解压进 `GameData` 里面。
+2. 确认存在 `GameData/KerbTac/Plugins/KerbTac.dll`。
+3. 启动游戏。原版游戏即可录制；安装 BDArmory Plus 后可以额外记录战斗数据。
 
 升级时请同时更新录制端和播放器。新播放器可以读取旧录像；旧播放器遇到新录像里部分未采集的遥测列时，可能拒绝整份文件。
 
@@ -91,9 +90,9 @@ KerbTac 的原创代码采用 **MIT**，见 [LICENSE](LICENSE)。第三方资产
 
 <p align="center">
   <a href="#中文">简体中文</a> &nbsp;·&nbsp; <strong>English</strong><br>
-  <a href="docs/format-v1.md">Format</a> &nbsp;·&nbsp;
-  <a href="docs/README.md">Format index</a> &nbsp;·&nbsp;
-  <a href="docs/DATA-NOTES.md">Data notes</a>
+  <a href="docs/format-v1.md#english">Format</a> &nbsp;·&nbsp;
+  <a href="docs/README.md#english">Format index</a> &nbsp;·&nbsp;
+  <a href="docs/DATA-NOTES.md#english">Data notes</a>
 </p>
 
 Turn a KSP flight into a scrubbable timeline: the recorder continuously captures multiple vessels, missiles and bombs, combat events, and telemetry inside the game; the player rebuilds the mission in a planet-fixed Three.js scene in Chrome, with three cameras, trails, altitude walls, events, and telemetry. Recording and replay are fully offline: no server and no uploads.
@@ -126,16 +125,15 @@ They can be used separately: replaying a recording does not require KSP, and the
 
 #### Format
 
-`.kerbtac` is a versioned ZIP + JSON format, currently v1 / revisions 1–4. The current player reads older recordings; the format contract starts at [`docs/format-v1.md`](docs/format-v1.md), and data provenance, missing-value semantics, and limitations are documented in [`docs/DATA-NOTES.md`](docs/DATA-NOTES.md).
+`.kerbtac` is a versioned ZIP + JSON format, currently v1 / revisions 1–4. The current player reads older recordings; the format contract starts at [`docs/format-v1.md`](docs/format-v1.md#english), and data provenance, missing-value semantics, and limitations are documented in [`docs/DATA-NOTES.md`](docs/DATA-NOTES.md#english).
 
 ### Quick start
 
 #### Installation
 
-1. Exit KSP 1.12.5.
-2. Download `KerbTac-v0.1.0.zip` from [Releases](https://github.com/TerranMMG/KerbTac/releases) or [SpaceDock](https://spacedock.info/mod/4889/KerbTac) and extract it into the **KSP game root** (the folder containing `KSP_x64.exe`), not into `GameData`.
-3. Confirm that `GameData/KerbTac/Plugins/KerbTac.dll` exists.
-4. Start the game. The stock game records as-is; BDArmory Plus adds combat data.
+1. Download `KerbTac-v0.1.0.zip` from [Releases](https://github.com/TerranMMG/KerbTac/releases) or [SpaceDock](https://spacedock.info/mod/4889/KerbTac) and extract it into the **KSP game root** (the folder containing `KSP_x64.exe`), not into `GameData`.
+2. Confirm that `GameData/KerbTac/Plugins/KerbTac.dll` exists.
+3. Start the game. The stock game records as-is; BDArmory Plus adds combat data.
 
 Update the recorder and player together. The current player reads older recordings; an older player may reject a newer recording that contains telemetry columns it does not understand.
 
