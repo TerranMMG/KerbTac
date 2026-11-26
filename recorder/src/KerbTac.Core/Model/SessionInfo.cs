@@ -54,7 +54,7 @@ namespace KerbTac.Core
     /// <summary>Version constants shared by the recorder and the format writer.</summary>
     public static class KerbTacVersion
     {
-        public const string RecorderVersion = "0.1.0";
+        public const string RecorderVersion = "0.1.1";
         public const int FormatVersion = 1;
         public const int FormatRevision = 4;
         public const string FormatName = "kerbtac";

@@ -43,7 +43,8 @@ namespace KerbTac.Recorder
             double lat = Safe(vessel.latitude);
             double lon = Safe(vessel.longitude);
             double alt = Safe(vessel.altitude);
-            FlightAngles angles = FlightAngles.Compute(velocityBf.X, velocityBf.Y, velocityBf.Z);
+            bool hasVelocity = velocityBf.IsFinite && velocityBf.LengthSquared > 0;
+            FlightAngles angles = FlightAngles.Compute(velocityBf, attitude);
 
             VesselSample sample = new VesselSample
             {
@@ -65,8 +66,8 @@ namespace KerbTac.Recorder
                 SurfaceSpeed = Finite(vessel.srfSpeed),
                 Ias = Finite(vessel.indicatedAirSpeed),
                 Mach = Finite(vessel.mach),
-                Aoa = velocityBf.IsFinite ? Finite(angles.Aoa) : null,
-                Aos = velocityBf.IsFinite ? Finite(angles.Aos) : null,
+                Aoa = hasVelocity ? Finite(angles.Aoa) : null,
+                Aos = hasVelocity ? Finite(angles.Aos) : null,
                 Agl = Finite(vessel.radarAltitude),
                 DynPressure = Finite(vessel.dynamicPressurekPa),
                 PitchInput = vessel.ctrlState != null ? Finite(vessel.ctrlState.pitch) : null,

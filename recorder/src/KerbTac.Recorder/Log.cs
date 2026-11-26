@@ -1,4 +1,5 @@
 using System;
+using KerbTac.Core;
 using UnityEngine;
 
 namespace KerbTac.Recorder
@@ -33,7 +34,7 @@ namespace KerbTac.Recorder
     internal static class PluginInfo
     {
         public const string Name = "KerbTac Recorder";
-        public const string Version = "0.1.0";
+        public const string Version = KerbTacVersion.RecorderVersion;
 
         public static string KspVersion()
         {

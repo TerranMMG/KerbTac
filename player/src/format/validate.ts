@@ -4,6 +4,7 @@
 
 import { FormatError, isSafeEntryPath, parseJson, readArchive, requireEntry } from './parse';
 import { readArchiveModels } from './models';
+import { normalizeQuat, quatConjugate, quatRotate } from '../playback/math';
 import type {
   ActorTrack,
   CelestialBodyDef,
@@ -1218,6 +1219,29 @@ export interface ParseOptions {
   fileName?: string;
 }
 
+/** v0.1.0 computed the angles in the planetary frame instead of the vessel frame. */
+function correctLegacyFlightAngles(samples: SampleTable): void {
+  const { q, vx, vy, vz, aoa, aos, length } = samples;
+  if (!aoa && !aos) return;
+  const degrees = 180 / Math.PI;
+  for (let i = 0; i < length; i++) {
+    const x = vx?.[i] ?? NaN;
+    const y = vy?.[i] ?? NaN;
+    const z = vz?.[i] ?? NaN;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z) ||
+        (x === 0 && y === 0 && z === 0)) {
+      if (aoa) aoa[i] = NaN;
+      if (aos) aos[i] = NaN;
+      continue;
+    }
+    const j = i * 4;
+    const attitude = normalizeQuat({ x: q[j], y: q[j + 1], z: q[j + 2], w: q[j + 3] });
+    const local = quatRotate(quatConjugate(attitude), { x, y, z });
+    if (aoa && Number.isFinite(aoa[i])) aoa[i] = Math.atan2(-local.y, local.z) * degrees;
+    if (aos && Number.isFinite(aos[i])) aos[i] = Math.atan2(local.x, local.z) * degrees;
+  }
+}
+
 export function parseArchive(bytes: Uint8Array, options: ParseOptions = {}): Replay {
   const warnings: ReplayWarning[] = [];
   const warn = (code: WarningCode, params: Record<string, string | number>): void => {
@@ -1227,6 +1251,8 @@ export function parseArchive(bytes: Uint8Array, options: ParseOptions = {}): Rep
   const archive = readArchive(bytes);
   const manifestBytes = requireEntry(archive, 'manifest.json');
   const manifest = readManifest(parseJson(manifestBytes, 'manifest.json'));
+  const legacyFlightAngles = manifest.generator.name === 'KerbTac Recorder' &&
+    manifest.generator.version === '0.1.0';
 
   const bodiesPath = 'bodies.json';
   const eventsPath = 'events.json';
@@ -1238,6 +1264,11 @@ export function parseArchive(bytes: Uint8Array, options: ParseOptions = {}): Rep
     const trackPath = `vessels/${summary.id}.json`;
     const raw = parseJson(requireEntry(archive, trackPath), trackPath);
     const vessel = readVessel(raw, `vessels[${i}]`, summary, bodies, warn);
+    if (legacyFlightAngles) {
+      for (const segment of vessel.segments) {
+        if (segment.samples) correctLegacyFlightAngles(segment.samples);
+      }
+    }
     if (summary.track !== trackPath) {
       // The manifest points somewhere else; keep the file we actually loaded.
       warn('trackPathMismatch', { path: summary.track, used: trackPath });

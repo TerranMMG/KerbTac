@@ -19,7 +19,7 @@ A mission recorder and offline browser replay player for Kerbal Space Program 1.
 | 组件 | 用途 |
 | --- | --- |
 | **录制端**（`KerbTac.dll`） | KSP 插件。在 Flight 场景里 Start/Stop，连续记录载具、导弹、战斗事件和遥测，分块落盘后归档为 `.kerbtac`。 |
-| **播放器**（`KerbTac-Player-v0.1.0.html`） | 单个 HTML 文件。直接双击打开 `.kerbtac`，用 Three.js 重建任务场景；不需要安装、服务器或网络。 |
+| **播放器**（`KerbTac-Player-v*.html`） | 单个 HTML 文件。直接双击打开 `.kerbtac`，用 Three.js 重建任务场景；不需要安装、服务器或网络。 |
 
 两者可以分开使用：只看录像时不需要启动 KSP；录制端窗口里也有 **Open replay player** 按钮。
 
@@ -48,7 +48,7 @@ A mission recorder and offline browser replay player for Kerbal Space Program 1.
 
 ### 安装
 
-1. 从 [Releases](https://github.com/TerranMMG/KerbTac/releases) 或 [SpaceDock](https://spacedock.info/mod/4889/KerbTac) 下载 `KerbTac-v0.1.0.zip`，解压到 **KSP 游戏根目录**（包含 `KSP_x64.exe` 的目录），不要解压进 `GameData` 里面。
+1. 从 [Releases](https://github.com/TerranMMG/KerbTac/releases) 或 [SpaceDock](https://spacedock.info/mod/4889/KerbTac) 下载最新的 `KerbTac-v*.zip`，解压到 **KSP 游戏根目录**（包含 `KSP_x64.exe` 的目录），不要解压进 `GameData` 里面。
 2. 确认存在 `GameData/KerbTac/Plugins/KerbTac.dll`。
 3. 启动游戏。原版游戏即可录制；安装 BDArmory Plus 后可以额外记录战斗数据。
 
@@ -64,7 +64,7 @@ A mission recorder and offline browser replay player for Kerbal Space Program 1.
 
 1. 点 **Open replay player**，浏览器会打开模组内置的本地播放器。
 2. 用 **Choose file** 选择 `.kerbtac`，或把文件拖进页面。
-3. 也可以直接打开 Release 中的 `KerbTac-Player-v0.1.0.html`，不需要启动服务器或上传录像。
+3. 也可以直接打开 Release 中的 `KerbTac-Player-v*.html`，不需要启动服务器或上传录像。
 
 ## 兼容性
 
@@ -102,7 +102,7 @@ Turn a KSP flight into a scrubbable timeline: the recorder continuously captures
 | Component | Purpose |
 | --- | --- |
 | **Recorder** (`KerbTac.dll`) | A KSP plugin. Start/Stop in a Flight scene; it records vessels, missiles, combat events, and telemetry, spills chunks to disk, and archives them as `.kerbtac`. |
-| **Player** (`KerbTac-Player-v0.1.0.html`) | A single HTML file. Open a `.kerbtac` directly and rebuild the mission with Three.js; no install, server, or network required. |
+| **Player** (`KerbTac-Player-v*.html`) | A single HTML file. Open a `.kerbtac` directly and rebuild the mission with Three.js; no install, server, or network required. |
 
 They can be used separately: replaying a recording does not require KSP, and the recorder window includes an **Open replay player** button.
 
@@ -131,7 +131,7 @@ They can be used separately: replaying a recording does not require KSP, and the
 
 #### Installation
 
-1. Download `KerbTac-v0.1.0.zip` from [Releases](https://github.com/TerranMMG/KerbTac/releases) or [SpaceDock](https://spacedock.info/mod/4889/KerbTac) and extract it into the **KSP game root** (the folder containing `KSP_x64.exe`), not into `GameData`.
+1. Download the latest `KerbTac-v*.zip` from [Releases](https://github.com/TerranMMG/KerbTac/releases) or [SpaceDock](https://spacedock.info/mod/4889/KerbTac) and extract it into the **KSP game root** (the folder containing `KSP_x64.exe`), not into `GameData`.
 2. Confirm that `GameData/KerbTac/Plugins/KerbTac.dll` exists.
 3. Start the game. The stock game records as-is; BDArmory Plus adds combat data.
 
@@ -147,7 +147,7 @@ Update the recorder and player together. The current player reads older recordin
 
 1. Click **Open replay player** to open the bundled local player in your browser.
 2. Choose or drag a `.kerbtac` file onto the page.
-3. You can also open `KerbTac-Player-v0.1.0.html` from the release directly; no server or upload is required.
+3. You can also open `KerbTac-Player-v*.html` from the release directly; no server or upload is required.
 
 ### Compatibility
 
